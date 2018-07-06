@@ -4,6 +4,7 @@
 struct Aircraft {
 	int v;
 	int h;
+	int model[3][6] = {};
 	int life;
 };
 
@@ -52,6 +53,7 @@ private:
 	int bulletGenerateSpeedCnt;
 	int bulletMoveSpeed;
 	int bulletMoveSpeedCnt;
+	int enemyLife;
 	int enemyMoveSpeed;
 	int enemyMoveSpeedCnt;
 	int enemyGenerateSpeed;
@@ -60,6 +62,5 @@ private:
 	int enemyNumberCnt;
 	Aircraft aircraft, *enemy;
 };
-
 
 #endif

@@ -33,7 +33,7 @@ void AirBattle::initColor()
 	init_pair(AIR_ENEMY, COLOR_RED, COLOR_BLACK);
 	init_pair(AIRCRAFT, COLOR_CYAN, COLOR_BLACK);
 	init_pair(BOUNDARY, COLOR_WHITE, COLOR_BLACK);
-	init_pair(TEXT, COLOR_GREEN, COLOR_BLACK);
+	init_pair(TEXT, COLOR_WHITE, COLOR_BLACK);
 }
 
 void AirBattle::initGame()
@@ -55,6 +55,9 @@ void AirBattle::initBoard()
 
 void AirBattle::initAircraft()
 {
+	aircraft.model[1][3] = 1;
+	for (int i = 1; i < 6; ++i)
+		aircraft.model[2][i] = 1;
 	aircraft.life = 3;
 	totalKillCount = 0;
 	aircraft.h = boardLenth-1;
@@ -74,9 +77,12 @@ void AirBattle::initBullet()
 
 void AirBattle::initEnemy()
 {
+	enemyLife = 3;
 	enemyNumber = 30;
 	enemyNumberCnt = 0;
 	enemy = new Aircraft [enemyNumber];
+	for (int i = 0; i < enemyNumber; ++i)
+		enemy[i].h = enemy[i].v = -1;
 	enemyMoveSpeed = 2500;
 	enemyGenerateSpeed = 6000;
 	enemyMoveSpeedCnt = 0;
@@ -87,6 +93,7 @@ void AirBattle::singleEnemyGenerate(Aircraft &enemy)
 {
 		enemy.v = rand() % boardWidth;
 		enemy.h = 0;
+		enemy.life = enemyLife;
 		// int y = rand() % boardWidth;
 		// board[0][y] = -2;
 		enemyGenerateSpeedCnt = 0;
@@ -125,11 +132,10 @@ void AirBattle::enemyMove()
 void AirBattle::singleBulletGenerate(int force)
 {
 	for (int i = 0; i < force; ++i) {
-		board[aircraft.h][aircraft.v+i] = 1;
-		board[aircraft.h][aircraft.v] = 1;
-		board[aircraft.h][aircraft.v-i] = 1;
+		board[aircraft.h-1][aircraft.v+i] = 1;
+		board[aircraft.h-1][aircraft.v] = 1;
+		board[aircraft.h-1][aircraft.v-i] = 1;
 	}
-
 }
 
 void AirBattle::bulletGenerate()
@@ -225,8 +231,11 @@ void AirBattle::aircraftDraw()
 	}
 
 	attron(COLOR_PAIR(AIRCRAFT));
-	mvprintw(aircraft.h, aircraft.v, "G(%d,%d,%d)", aircraft.life, totalKillCount, shrapnelReady);
+	mvaddch(aircraft.h-1, aircraft.v, 'A');
+	mvprintw(aircraft.h, aircraft.v-2, "/WMW\\");
+	//mvprintw(aircraft.h, aircraft.v, "G");
 	attron(COLOR_PAIR(AIRCRAFT));
+	mvprintw(boardLenth+1, 0 , "Life:%d     Kill:%d    Shrapnel:%d   (%d,%d)", aircraft.life, totalKillCount, shrapnelReady, aircraft.h, aircraft.v);
 }
 
 void AirBattle::aircraftMove(int direction)
@@ -250,22 +259,31 @@ void AirBattle::aircraftMove(int direction)
 bool AirBattle::airCrash()
 {
 	for (int i = 0; i < enemyNumber; ++i) {
-		if (enemy[i].h == aircraft.h && enemy[i].v == aircraft.v) {
+		if (enemy[i].h >= boardLenth)// 如果敌机超出边界则，重新生成
+			singleEnemyGenerate(enemy[i]);
+
+		if (enemy[i].h == aircraft.h-1 && enemy[i].v == aircraft.v) { // 判断是否与飞机任意一部位相撞
 			singleEnemyGenerate(enemy[i]);
 			totalKillCount++;
 			if (gameOver()) return 1;// 如果生命为零则结束游戏
 		}
-		else if (enemy[i].h >= boardLenth)
-			singleEnemyGenerate(enemy[i]);
+		for (int i = 0; i < 5; ++i)
+			if (enemy[i].h == aircraft.h && enemy[i].v == aircraft.v-2+i) {
+				singleEnemyGenerate(enemy[i]);
+				totalKillCount++;
+				if (gameOver()) return 1;// 如果生命为零则结束游戏
+			}
 
 		for (int j = 0; j < boardLenth; ++j)
 			for (int k = 0; k < boardWidth; ++k)
 				if (board[j][k] == 1)
 					if (enemy[i].h == j && enemy[i].v == k) { //如果敌机与子弹重合
 						board[j][k] = 0;
-						singleEnemyGenerate(enemy[i]);
-						totalKillCount++;// 杀敌数增加
-						if (totalKillCount % 100 == 0)
+						if (--enemy[i].life <= 0) { // 如果击中，敌机减血
+							singleEnemyGenerate(enemy[i]);
+							totalKillCount++;// 杀敌数增加
+						}
+						if (totalKillCount % 100 == 99)
 							shrapnelReady++;// 如果杀敌数超过一百，增加霰弹枪数量
 					}
 	}
@@ -274,7 +292,7 @@ bool AirBattle::airCrash()
 
 bool AirBattle::gameOver()
 {
-	if (--aircraft.life != 0) {
+	if (--aircraft.life != 0) {// 如果飞机被击中，或撞击，则重设位置，生命减一
 		aircraft.h = boardLenth-1;
 		aircraft.v = boardWidth/2;
 	} else {
