@@ -1,0 +1,10 @@
+# Exclude all files
+/*
+
+# Include these files.
+!AirBattle.h
+!AirBattle.cpp
+!main.cpp
+!README.MD
+!.gitignore
+!Makefile
