@@ -18,41 +18,59 @@ public:
 	void initBoard();
 	void initEnemy();
 	void initBullet();
+	void initEnemyBullet();
+	void initAircraftBullet();
 	void initAircraft();
 	void masterMenu();
 	bool insideMenu();
 	void help();
 	bool gameOver();
-	void singleEnemyGenerate(Aircraft &);
-	void enemyGenerate();
 	void enemyMove();
-	void bulletGenerate();
-	void singleBulletGenerate(int);
+	void enemyGenerate();
+	void singleEnemyGenerate(Aircraft &);
+
+	void singleBulletGenerate(int speed, int **bullet, Aircraft location, int direc);
+	void bulletGenerate(int speed, int **bullet, Aircraft location, int direc);
+	void aircraftBulletMove();
+	void enemyBulletMove();
 	void bulletMove();
+	void enemyBulletGenerate();
+
+
 	void aircraftMove(int direction);
 	bool airCrash();
-	void bulletDraw();
+	void bulletDraw(int **, const int);
 	void aircraftDraw();
 	void backgrandDraw();
 	void drawEverything();
 	void playGame();
 private:
 	const int AIR_BUTTLE = 1;
-	const int AIR_ENEMY = 2;
+	const int ENEMY_BUTTLE = 2;
 	const int AIRCRAFT = 3;
-	const int BOUNDARY = 4;
-	const int TEXT = 5;
+	const int ENEMY = 4;
+	const int BOUNDARY = 5;
+	const int TEXT = 6;
+	const int BULLET_UP = -1;
+	const int BULLET_DOWN= 1;
 	int totalKillCount;
 	int boardLenth;
 	int boardWidth;
-	int **board;
+	int **aircraftBullet;
 	int shrapnelReady;
-	int bulletForce;
-	int bulletForceCnt;
-	int bulletGenerateSpeed;
-	int bulletGenerateSpeedCnt;
-	int bulletMoveSpeed;
-	int bulletMoveSpeedCnt;
+	int aircraftBulletForce;
+	int aircraftBulletForceCnt;
+	int aircraftBulletGenerateSpeed;
+	int aircraftBulletGenerateSpeedCnt;
+	int aircraftBulletMoveSpeed;
+	int aircraftBulletMoveSpeedCnt;
+
+	int enemyBulletGenerateSpeed;
+	int enemyBulletGenerateSpeedCnt;
+	int enemyBulletMoveSpeed;
+	int enemyBulletMoveSpeedCnt;
+	int **enemyBullet;
+
 	int enemyLife;
 	int enemyMoveSpeed;
 	int enemyMoveSpeedCnt;

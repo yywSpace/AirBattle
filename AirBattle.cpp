@@ -21,7 +21,15 @@ AirBattle::~AirBattle()
 {
 	noecho();
 	nocbreak();
+	for (int i = 0; i < boardLenth; ++i) {
+		delete [] aircraftBullet[i];
+		delete [] enemyBullet[i];
+	}
+	delete [] aircraftBullet;
+	delete [] enemyBullet;
 	delete [] enemy;
+	aircraftBullet = NULL;
+	enemyBullet = NULL;
 	enemy = NULL;
 	endwin();
 }
@@ -30,7 +38,8 @@ void AirBattle::initColor()
 {
 	start_color();
 	init_pair(AIR_BUTTLE, COLOR_WHITE, COLOR_BLACK);
-	init_pair(AIR_ENEMY, COLOR_RED, COLOR_BLACK);
+	init_pair(ENEMY_BUTTLE, COLOR_RED, COLOR_BLACK);
+	init_pair(ENEMY, COLOR_RED, COLOR_BLACK);
 	init_pair(AIRCRAFT, COLOR_CYAN, COLOR_BLACK);
 	init_pair(BOUNDARY, COLOR_WHITE, COLOR_BLACK);
 	init_pair(TEXT, COLOR_WHITE, COLOR_BLACK);
@@ -48,31 +57,46 @@ void AirBattle::initBoard()
 {
 	boardLenth = 30;
 	boardWidth = 40;
-	board = new int* [boardLenth]();
-	for (int i = 0; i < boardLenth; ++i)
-		board[i] = new int [boardWidth]();
 }
 
 void AirBattle::initAircraft()
 {
-	aircraft.model[1][3] = 1;
-	for (int i = 1; i < 6; ++i)
-		aircraft.model[2][i] = 1;
+	// aircraft.model[1][3] = 1;
+	// for (int i = 1; i < 6; ++i)
+	// 	aircraft.model[2][i] = 1;
 	aircraft.life = 3;
 	totalKillCount = 0;
 	aircraft.h = boardLenth-1;
 	aircraft.v = boardWidth/2;
+
+	aircraftBullet = new int* [boardLenth]();
+	for (int i = 0; i < boardLenth; ++i)
+		aircraftBullet[i] = new int [boardWidth]();
+
 }
 
 void AirBattle::initBullet()
 {
+	initAircraftBullet();
+	initEnemyBullet();
+}
+
+void AirBattle::initEnemyBullet()
+{
+	enemyBulletMoveSpeed = enemyMoveSpeed-700;
+	enemyBulletMoveSpeedCnt = 0;
+	enemyBulletGenerateSpeed = enemyMoveSpeed-500;
+	enemyBulletGenerateSpeedCnt = 0;
+}
+void AirBattle::initAircraftBullet()
+{
 	shrapnelReady = 2;
-	bulletForce = 10;
-	bulletForceCnt = 0;
-	bulletGenerateSpeed = 1000;
-	bulletGenerateSpeedCnt = 0;
-	bulletMoveSpeed = 1000;
-	bulletMoveSpeedCnt = 0;
+	aircraftBulletForce = 10;
+	aircraftBulletForceCnt = 0;
+	aircraftBulletGenerateSpeed = 1000;
+	aircraftBulletGenerateSpeedCnt = 0;
+	aircraftBulletMoveSpeed = 1000;
+	aircraftBulletMoveSpeedCnt = 0;
 }
 
 void AirBattle::initEnemy()
@@ -83,20 +107,22 @@ void AirBattle::initEnemy()
 	enemy = new Aircraft [enemyNumber];
 	for (int i = 0; i < enemyNumber; ++i)
 		enemy[i].h = enemy[i].v = 0;
-	enemyMoveSpeed = 2500;
+	enemyMoveSpeed = 3000;
 	enemyGenerateSpeed = 6000;
 	enemyMoveSpeedCnt = 0;
 	enemyGenerateSpeedCnt = 0;
+
+	enemyBullet = new int* [boardLenth]();
+	for (int i = 0; i < boardLenth; ++i)
+		enemyBullet[i] = new int [boardWidth]();
 }
 
 void AirBattle::singleEnemyGenerate(Aircraft &enemy)
 {
-		enemy.v = rand() % boardWidth;
-		enemy.h = 0;
-		enemy.life = enemyLife;
-		// int y = rand() % boardWidth;
-		// board[0][y] = -2;
-		enemyGenerateSpeedCnt = 0;
+	enemy.v = rand() % boardWidth;
+	enemy.h = 0;
+	enemy.life = enemyLife;
+	enemyGenerateSpeedCnt = 0;
 }
 
 void AirBattle::enemyGenerate()
@@ -115,30 +141,18 @@ void AirBattle::enemyMove()
 		 }
 		 enemyMoveSpeedCnt = 0;
 	 }
-	// if (enemyMoveSpeedCnt++ == enemyMoveSpeed) {
-	// 	for (int i = boardLenth-1; i >= 0; --i) {
-	// 		for (int j = boardWidth-1; j >= 0; --j) {
-	// 			if (board[i][j] == -2) {
-	// 				board[i][j] = 0;
-	// 				if (i+1 >= boardLenth) continue;
-	// 				board[i+1][j] = -2;
-	// 			}
-	// 		}
-	// 	}
-	// 	enemyMoveSpeedCnt = 0;
-	// }
 }
 
-void AirBattle::singleBulletGenerate(int force)
+void AirBattle::singleBulletGenerate(int force, int **bullet, Aircraft location, int direc)
 {
 	for (int i = 0; i < force; ++i) {
-		board[aircraft.h-1][aircraft.v+i] = 1;
-		board[aircraft.h-1][aircraft.v] = 1;
-		board[aircraft.h-1][aircraft.v-i] = 1;
+		bullet[location.h+direc][location.v+i] = 1;
+		bullet[location.h+direc][location.v] = 1;
+		bullet[location.h+direc][location.v-i] = 1;
 	}
 }
 
-void AirBattle::bulletGenerate()
+void AirBattle::bulletGenerate(int speed, int **bullet, Aircraft location,int direc)
 {
 	int force = 1;
 	int random = rand() % 20;
@@ -163,26 +177,58 @@ void AirBattle::bulletGenerate()
 	}
 
 aa:
-	if (bulletGenerateSpeedCnt++ == bulletGenerateSpeed) {
-		singleBulletGenerate(force);
-		bulletGenerateSpeedCnt = 0;
+	if (aircraftBulletGenerateSpeedCnt++ == speed) {
+		singleBulletGenerate(force,bullet,location, direc);
+		aircraftBulletGenerateSpeedCnt = 0;
 	}
+}
+
+void AirBattle::enemyBulletGenerate()
+{
+	for (int i = 0; i < enemyNumberCnt; ++i) {
+		if (rand() % 10 == 0 && enemy[i].h < boardLenth-1) {
+			bulletGenerate(enemyBulletGenerateSpeed, enemyBullet, enemy[i], BULLET_DOWN);
+		}
+	}
+}
+
+void AirBattle::aircraftBulletMove()
+{
+	if (aircraftBulletMoveSpeedCnt++ == aircraftBulletMoveSpeed) {
+		for (int i = 0; i < boardLenth; ++i) { // 本机子弹移动
+			for (int j = 0; j < boardWidth; ++j) {
+				if (aircraftBullet[i][j] == 1) {
+					aircraftBullet[i][j] = 0;
+					if (i-1 <= 0) continue;
+					aircraftBullet[i-1][j] = 1;
+				}
+			}
+		}
+		aircraftBulletMoveSpeedCnt = 0;
+	}
+}
+
+void AirBattle::enemyBulletMove()
+{
+	if (enemyBulletMoveSpeedCnt++ == enemyBulletMoveSpeed) {
+		for (int i = boardLenth-1; i >= 0; --i) {
+			for (int j = boardWidth-1; j >= 0; --j) {
+				if (enemyBullet[i][j] == 1) {
+					enemyBullet[i][j] = 0;
+					if (i+1 >= boardLenth) continue;
+					enemyBullet[i+1][j] = 1;
+				}
+			}
+		}
+		enemyBulletMoveSpeedCnt = 0;
+	}
+
 }
 
 void AirBattle::bulletMove()
 {
-	if (bulletMoveSpeedCnt++ == bulletMoveSpeed) {
-		for (int i = 0; i < boardLenth; ++i) {
-			for (int j = 0; j < boardWidth; ++j) {
-				if (board[i][j] == 1) {
-					board[i][j] = 0;
-					if (i-1 <= 0) continue;
-					board[i-1][j] = 1;
-				}
-			}
-		}
-		bulletMoveSpeedCnt = 0;
-	}
+	enemyBulletMove();
+	aircraftBulletMove();
 }
 
 void AirBattle::backgrandDraw()
@@ -200,14 +246,14 @@ void AirBattle::backgrandDraw()
 	addch('\n');
 }
 
-void AirBattle:: bulletDraw()
+void AirBattle:: bulletDraw(int **bullet,const int COLOR)
 {
 	for (int i = 0; i < boardLenth; ++i) {
 		for (int j = 0; j < boardWidth; ++j) {
-			if (board[i][j] == 1) {
-				attron(COLOR_PAIR(AIR_BUTTLE));
+			if (bullet[i][j] == 1) {
+				attron(COLOR_PAIR(COLOR));
 				mvprintw(i, j,"\"");
-				attroff(COLOR_PAIR(AIR_BUTTLE));
+				attroff(COLOR_PAIR(COLOR));
 			}
 		}
 	}
@@ -217,7 +263,8 @@ void AirBattle::drawEverything()
 {
 	erase();
 	backgrandDraw();
-	bulletDraw();
+	bulletDraw(aircraftBullet,AIR_BUTTLE);
+	bulletDraw(enemyBullet,ENEMY_BUTTLE);
 	aircraftDraw();
 	refresh();
 }
@@ -226,13 +273,13 @@ void AirBattle::aircraftDraw()
 {
 
 	for (int i = 0; i < enemyNumberCnt; ++i) {
-		attron(COLOR_PAIR(AIR_ENEMY));
+		attron(COLOR_PAIR(ENEMY));
 		mvprintw(enemy[i].h, enemy[i].v, "@");
-		attroff(COLOR_PAIR(AIR_ENEMY));
+		attroff(COLOR_PAIR(ENEMY));
 	}
 
 	attron(COLOR_PAIR(AIRCRAFT));
-	mvaddch(aircraft.h-1, aircraft.v, 'A');
+	mvaddch(aircraft.h-1, aircraft.v,    'A');
 	mvprintw(aircraft.h, aircraft.v-2, "/WMW\\");
 	//mvprintw(aircraft.h, aircraft.v, "G");
 	attron(COLOR_PAIR(AIRCRAFT));
@@ -277,9 +324,9 @@ bool AirBattle::airCrash()
 
 		for (int j = 0; j < boardLenth; ++j)
 			for (int k = 0; k < boardWidth; ++k)
-				if (board[j][k] == 1)
+				if (aircraftBullet[j][k] == 1)
 					if (enemy[i].h == j && enemy[i].v == k) { //如果敌机与子弹重合
-						board[j][k] = 0;
+						aircraftBullet[j][k] = 0;
 						if (--enemy[i].life <= 0) { // 如果击中，敌机减血
 							singleEnemyGenerate(enemy[i]);
 							totalKillCount++;// 杀敌数增加
@@ -319,11 +366,12 @@ void AirBattle::playGame()
 			if (action == 'p') if(insideMenu()) return;
 			if (action == ' ') fire = ~fire;
 			if (action == 'u' && shrapnelReady > 0) {
-				singleBulletGenerate(bulletForce);
+				singleBulletGenerate(aircraftBulletForce,aircraftBullet,aircraft,BULLET_UP);
 				shrapnelReady--;
 			}
 		}
-		if (fire) bulletGenerate();
+		if (fire) bulletGenerate(aircraftBulletGenerateSpeed,aircraftBullet,aircraft,-1);
+		enemyBulletGenerate();
 		bulletMove();
 		if (airCrash()) return;
 		drawEverything();
