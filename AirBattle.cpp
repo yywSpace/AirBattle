@@ -78,11 +78,11 @@ void AirBattle::initBullet()
 void AirBattle::initEnemy()
 {
 	enemyLife = 3;
-	enemyNumber = 30;
+	enemyNumber = 20;
 	enemyNumberCnt = 0;
 	enemy = new Aircraft [enemyNumber];
 	for (int i = 0; i < enemyNumber; ++i)
-		enemy[i].h = enemy[i].v = -1;
+		enemy[i].h = enemy[i].v = 0;
 	enemyMoveSpeed = 2500;
 	enemyGenerateSpeed = 6000;
 	enemyMoveSpeedCnt = 0;
@@ -224,6 +224,7 @@ void AirBattle::drawEverything()
 
 void AirBattle::aircraftDraw()
 {
+
 	for (int i = 0; i < enemyNumberCnt; ++i) {
 		attron(COLOR_PAIR(AIR_ENEMY));
 		mvprintw(enemy[i].h, enemy[i].v, "@");
@@ -236,6 +237,7 @@ void AirBattle::aircraftDraw()
 	//mvprintw(aircraft.h, aircraft.v, "G");
 	attron(COLOR_PAIR(AIRCRAFT));
 	mvprintw(boardLenth+1, 0 , "Life:%d     Kill:%d    Shrapnel:%d   (%d,%d)", aircraft.life, totalKillCount, shrapnelReady, aircraft.h, aircraft.v);
+	mvprintw(boardLenth+2, 0 , "EnemyNumber:%d ,EnemyNumberCnt:%d", enemyNumber, enemyNumberCnt);
 }
 
 void AirBattle::aircraftMove(int direction)
@@ -258,21 +260,20 @@ void AirBattle::aircraftMove(int direction)
 
 bool AirBattle::airCrash()
 {
-	for (int i = 0; i < enemyNumber; ++i) {
+	for (int i = 0; i < enemyNumberCnt; ++i) {
 		if (enemy[i].h >= boardLenth)// 如果敌机超出边界则，重新生成
 			singleEnemyGenerate(enemy[i]);
 
-		if (enemy[i].h == aircraft.h-1 && enemy[i].v == aircraft.v) { // 判断是否与飞机任意一部位相撞
+		if ((enemy[i].v == aircraft.v && enemy[i].h == aircraft.h-1) ||
+			(enemy[i].v == aircraft.v-2 && enemy[i].h == aircraft.h) ||
+			(enemy[i].v == aircraft.v-1 && enemy[i].h == aircraft.h) ||
+			(enemy[i].v == aircraft.v-0 && enemy[i].h == aircraft.h) ||
+			(enemy[i].v == aircraft.v+1 && enemy[i].h == aircraft.h) ||
+			(enemy[i].v == aircraft.v+2 && enemy[i].h == aircraft.h)) { // 判断是否与飞机任意一部位相撞
 			singleEnemyGenerate(enemy[i]);
 			totalKillCount++;
 			if (gameOver()) return 1;// 如果生命为零则结束游戏
 		}
-		for (int i = 0; i < 5; ++i)
-			if (enemy[i].h == aircraft.h && enemy[i].v == aircraft.v-2+i) {
-				singleEnemyGenerate(enemy[i]);
-				totalKillCount++;
-				if (gameOver()) return 1;// 如果生命为零则结束游戏
-			}
 
 		for (int j = 0; j < boardLenth; ++j)
 			for (int k = 0; k < boardWidth; ++k)
