@@ -93,7 +93,7 @@ void AirBattle::initAircraftBullet()
 	shrapnelReady = 2;
 	aircraftBulletForce = 10;
 	aircraftBulletForceCnt = 0;
-	aircraftBulletGenerateSpeed = 1000;
+	aircraftBulletGenerateSpeed= 1000;
 	aircraftBulletGenerateSpeedCnt = 0;
 	aircraftBulletMoveSpeed = 1000;
 	aircraftBulletMoveSpeedCnt = 0;
@@ -152,7 +152,7 @@ void AirBattle::singleBulletGenerate(int force, int **bullet, Aircraft location,
 	}
 }
 
-void AirBattle::bulletGenerate(int speed, int **bullet, Aircraft location,int direc)
+void AirBattle::bulletGenerate(int bulletSpeed, int &bulletSpeedCnt, int **bullet, Aircraft location,int direc)
 {
 	int force = 1;
 	int random = rand() % 20;
@@ -177,9 +177,9 @@ void AirBattle::bulletGenerate(int speed, int **bullet, Aircraft location,int di
 	}
 
 aa:
-	if (aircraftBulletGenerateSpeedCnt++ == speed) {
+	if (bulletSpeedCnt++ == bulletSpeed) {
 		singleBulletGenerate(force,bullet,location, direc);
-		aircraftBulletGenerateSpeedCnt = 0;
+		bulletSpeedCnt = 0;
 	}
 }
 
@@ -187,7 +187,7 @@ void AirBattle::enemyBulletGenerate()
 {
 	for (int i = 0; i < enemyNumberCnt; ++i) {
 		if (rand() % 10 == 0 && enemy[i].h < boardLenth-1) {
-			bulletGenerate(enemyBulletGenerateSpeed, enemyBullet, enemy[i], BULLET_DOWN);
+			bulletGenerate(enemyBulletGenerateSpeed, enemyBulletGenerateSpeedCnt, enemyBullet, enemy[i], BULLET_DOWN);
 		}
 	}
 }
@@ -263,8 +263,8 @@ void AirBattle::drawEverything()
 {
 	erase();
 	backgrandDraw();
-	bulletDraw(aircraftBullet,AIR_BUTTLE);
 	bulletDraw(enemyBullet,ENEMY_BUTTLE);
+	bulletDraw(aircraftBullet,AIR_BUTTLE);
 	aircraftDraw();
 	refresh();
 }
@@ -370,7 +370,8 @@ void AirBattle::playGame()
 				shrapnelReady--;
 			}
 		}
-		if (fire) bulletGenerate(aircraftBulletGenerateSpeed,aircraftBullet,aircraft,-1);
+		if (fire) bulletGenerate(aircraftBulletMoveSpeed,aircraftBulletMoveSpeedCnt,aircraftBullet,aircraft,BULLET_UP);
+
 		enemyBulletGenerate();
 		bulletMove();
 		if (airCrash()) return;

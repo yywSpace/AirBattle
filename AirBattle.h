@@ -30,7 +30,7 @@ public:
 	void singleEnemyGenerate(Aircraft &);
 
 	void singleBulletGenerate(int speed, int **bullet, Aircraft location, int direc);
-	void bulletGenerate(int speed, int **bullet, Aircraft location, int direc);
+	void bulletGenerate(const int bulletSpeed, int& bulletSpeedCnt, int **bullet, Aircraft location, int direc);
 	void aircraftBulletMove();
 	void enemyBulletMove();
 	void bulletMove();
