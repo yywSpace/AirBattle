@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <ctime>
 #include "AirBattle.h"
-#include "../Tool/Tool.h"
+#include "Tool.h"
 
 AirBattle::AirBattle()
 {
@@ -14,7 +14,6 @@ AirBattle::AirBattle()
 	curs_set(0);
 	cbreak();
 	keypad(stdscr, true);
-
 }
 
 AirBattle::~AirBattle()
@@ -60,7 +59,7 @@ void AirBattle::initBoard()
 }
 
 void AirBattle::initAircraft()
-{
+ {
 	// aircraft.model[1][3] = 1;
 	// for (int i = 1; i < 6; ++i)
 	// 	aircraft.model[2][i] = 1;

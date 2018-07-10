@@ -2,8 +2,17 @@
 /*
 
 # Include these files.
-!AirBattle.h
 !AirBattle.cpp
+!AirBattle.h
+
+!Aircraft.cpp
+!Aircraft.h
+!Aircraft_Enemy.cpp
+!Aircraft_Enemy.h
+!Aircraft_User.cpp
+!Aircraft_User.h
+!Framework.cpp
+!Framework.h
 !main.cpp
 !README.MD
 !.gitignore
