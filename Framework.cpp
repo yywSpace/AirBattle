@@ -5,7 +5,7 @@
 #include "Tool.h"
 
 Framework::Framework()
-	:user(30,40,1,1000,1000,3,2), enemy(30,40,1,1000,1000,1000,2000,20,2)
+	:user(30,40,1,1000,1000,3,3), enemy(30,40,1,5000,2500,10000,4000,20,2)
 {
 	totalKillCount = 0;
 	initscr();
@@ -28,7 +28,7 @@ void Framework::masterMenu()
 		refresh();
 		s = getch();
 		switch(s) {
-		case '1': playGame(); break;
+		case '1': restartGame(); playGame(); break;
 		case '2':  break;
 		case '3': help(); break;
 		case '4': exit(0); break;
@@ -38,18 +38,22 @@ void Framework::masterMenu()
 
 bool Framework::insideMenu()
 {
+
+	init_pair(TEXT, COLOR_CYAN, COLOR_BLACK);
 	int s;
+	attron(COLOR_PAIR(TEXT));
 	mvprintw(getBoardLenth()/2-4, getBoardWidth()/2-6, "1.Restart");
 	mvprintw(getBoardLenth()/2-3, getBoardWidth()/2-6, "2.Master menu");
 	mvprintw(getBoardLenth()/2-2, getBoardWidth()/2-6, "3.Help");
 	mvprintw(getBoardLenth()/2-1, getBoardWidth()/2-6, "4.Exit");
 	mvprintw(getBoardLenth()/2-0, getBoardWidth()/2-6, " ...");
-	mvprintw(getBoardLenth()/2+1, getBoardWidth()/2-6, " Press any key to countinue...");
+	mvprintw(getBoardLenth()/2+1, getBoardWidth()/2-14, "Press any key to countinue...");
 	drawBackgrand();
+	attroff(COLOR_PAIR(TEXT));
 	refresh();
 	s = getch();
 	switch(s) {
-	case '1': playGame(); break;
+	case '1': restartGame(); playGame(); break;
 	case '2': return 1;//masterMenu(); break;
 	case '3': help(); break;
 	case '4': exit(0); break;
@@ -62,7 +66,7 @@ bool Framework::insideMenu()
 void Framework::help()
 {
 
-	init_pair(TEXT, COLOR_WHITE, COLOR_BLACK);
+	init_pair(TEXT, COLOR_CYAN, COLOR_BLACK);
 	erase();
 	attron(COLOR_PAIR(TEXT));
 	printw(
@@ -126,38 +130,66 @@ bool Framework::gameOver()
 	return 0;
 }
 
+void Framework::bulletKillEnemy(int i)
+{
+	for (int j = 0; j < getBoardLenth(); ++j)
+		for (int k = 0; k < getBoardWidth(); ++k)
+			if (user.getBullet()[j][k] == 1)
+				if (enemy.getAttribute(i).x == j && enemy.getAttribute(i).y == k) { //如果敌机与子弹重合
+					user.setBullet(j, k, 0);
+					if (--enemy.getAttribute(i).life <= 0) { // 如果击中，敌机减血
+						enemy.singleEnemyGenerate(enemy.getAttribute(i));
+						totalKillCount++;// 杀敌数增加
+					}
+					if (totalKillCount % 100 == 99)
+						user.setShrapnel(user.getShrapnel()+1); //如果杀敌数超过一百，增加霰弹枪数量
+				}
+
+}
+
+bool Framework::userCrash(int x, int y)
+{
+	if ((y == user.getAttribute().y && x == user.getAttribute().x-1) ||
+		(y == user.getAttribute().y-2 && x == user.getAttribute().x) ||
+		(y == user.getAttribute().y-1 && x == user.getAttribute().x) ||
+		(y == user.getAttribute().y-0 && x == user.getAttribute().x) ||
+		(y == user.getAttribute().y+1 && x == user.getAttribute().x) ||
+		(y == user.getAttribute().y+2 && x == user.getAttribute().x))
+		return 1;
+	else
+		return 0;
+}
+
+bool Framework::bulletKillUser()
+{
+	for (int j = 0; j < getBoardLenth(); ++j) {
+		for (int k = 0; k < getBoardWidth(); ++k) {
+			if (enemy.getBullet()[j][k] == 1) {
+				if (userCrash(j, k)) {
+					enemy.setBullet(j, k, 0);
+					if (gameOver()) return 1;
+				}
+			}
+		}
+	}
+	return 0;
+}
+
 bool Framework::airCrash()
 {
 	for (int i = 0; i < enemy.getEnemyNumberCnt(); ++i) {
 		if (enemy.getAttribute(i).x >= getBoardLenth())// 如果敌机超出边界则，重新生成
 			enemy.singleEnemyGenerate(enemy.getAttribute(i));
 
-		if ((enemy.getAttribute(i).y == user.getAttribute().y && enemy.getAttribute(i).x == user.getAttribute().x-1) ||
-			(enemy.getAttribute(i).y == user.getAttribute().y-2 && enemy.getAttribute(i).x == user.getAttribute().x) ||
-			(enemy.getAttribute(i).y == user.getAttribute().y-1 && enemy.getAttribute(i).x == user.getAttribute().x) ||
-			(enemy.getAttribute(i).y == user.getAttribute().y-0 && enemy.getAttribute(i).x == user.getAttribute().x) ||
-			(enemy.getAttribute(i).y == user.getAttribute().y+1 && enemy.getAttribute(i).x == user.getAttribute().x) ||
-			(enemy.getAttribute(i).y == user.getAttribute().y+2 && enemy.getAttribute(i).x == user.getAttribute().x)) { // 判断是否与飞机任意一部位相撞
+		if (userCrash(enemy.getAttribute(i).x, enemy.getAttribute(i).y)) { // 判断是否与飞机任意一部位相撞
 			enemy.singleEnemyGenerate(enemy.getAttribute(i));
 			totalKillCount++;
 			if (gameOver()) return 1;// 如果生命为零则结束游戏
 		}
-
-		for (int j = 0; j < getBoardLenth(); ++j)
-			for (int k = 0; k < getBoardWidth(); ++k)
-				if (user.getBullet()[j][k] == 1)
-					if (enemy.getAttribute(i).x == j && enemy.getAttribute(i).y == k) { //如果敌机与子弹重合
-						user.setBullet(j, k, 0);
-						if (--enemy.getAttribute(i).life <= 0) { // 如果击中，敌机减血
-							enemy.singleEnemyGenerate(enemy.getAttribute(i));
-							totalKillCount++;// 杀敌数增加
-						}
-						if (totalKillCount % 100 == 99)
-							user.setShrapnel(user.getShrapnel()+1); //如果杀敌数超过一百，增加霰弹枪数量
-					}
+		bulletKillEnemy(i);
+		if (bulletKillUser()) return 1;
 	}
-	return 0;
-
+		return 0;
 }
 
 void Framework::drawEverything(std::vector <Aircraft *> air, int& fire)
@@ -179,10 +211,16 @@ void Framework::drawEverything(std::vector <Aircraft *> air, int& fire)
 
 void Framework::playGame()
 {
-	int action, fire = -1;
+	int action, fire = -1, kase = 0;
 	std::vector <Aircraft *> aircraft(2);
 
+
 	while (1) {
+		if (++kase == 1) {
+			drawEverything(aircraft, fire);
+			mvprintw(getBoardLenth()/2, getBoardWidth()/2-14, "Press any key to play game...");
+			getch();
+		}
 		if (Tool::kbhit()) {
 			action = getch();
 			user.moveAircraft(action);
@@ -193,11 +231,22 @@ void Framework::playGame()
 				user.setShrapnel(user.getShrapnel()-1);
 			}
 		}
+		drawEverything(aircraft, fire);
 		enemy.generateAircraft();
 		enemy.moveAircraft();
-		drawEverything(aircraft, fire);
 		if(airCrash()) return;
 	}
 	endwin();
+}
+
+void Framework::restartGame()
+{
+	user. setAttribute(getBoardLenth()-1, getBoardWidth()/2, 3);
+	user.setShrapnel(3);
+	user.initBullet(1, 1000, 1000);
+	user.initBoard(30, 40);
+	enemy.initAircraft(10000,4000,20,2);
+	enemy.initBullet(1, 5000, 2500);
+	enemy.initBoard(30, 40);
 }
 

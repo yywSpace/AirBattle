@@ -6,10 +6,9 @@
 Aircraft_Enemy::Aircraft_Enemy(int lenth, int width, int force, int bGenerateSpeed,
 							   int bMoveSpeed, int eGenerateSpeed, int eMoveSpeed, int enemyNum, int life)
 
-	:Aircraft(lenth, width, force, bGenerateSpeed, bMoveSpeed),
-	 enemyLife(life),enemyGenerateSpeed(eGenerateSpeed),enemyMoveSpeed(eMoveSpeed),enemyNumber(enemyNum)
+	:Aircraft(lenth, width, force, bGenerateSpeed, bMoveSpeed)
 {
-	initAircraft();
+	initAircraft(eGenerateSpeed, eMoveSpeed, enemyNum, life);
 }
 
 Aircraft_Enemy::~Aircraft_Enemy()
@@ -18,8 +17,14 @@ Aircraft_Enemy::~Aircraft_Enemy()
 	enemy = NULL;
 }
 
-void Aircraft_Enemy::initAircraft()
+void Aircraft_Enemy::initAircraft(int eGenerateSpeed, int eMoveSpeed, int enemyNum, int life)
 {
+	enemyGenerateSpeed = eGenerateSpeed;
+	enemyMoveSpeed = eMoveSpeed;
+	enemyNumber = enemyNum;
+	enemyLife = life;
+
+
 	enemyMoveSpeedCnt = 0;
 	enemyNumberCnt= 0;
 	enemyGenerateSpeedCnt = 0;
@@ -32,7 +37,7 @@ void Aircraft_Enemy::initAircraft()
 void Aircraft_Enemy::generateBullet()
 {
 	for (int i = 0; i < getEnemyNumberCnt(); ++i) {
-		if (rand() % 10 == 0 && enemy[i].x < getBoardLenth()-1) {
+		if (rand() % 20 == 0 && enemy[i].x < getBoardLenth()-1) {
 			bulletGenerate(enemy[i],BULLTE_DOWN);
 		}
 	}

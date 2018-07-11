@@ -10,10 +10,14 @@ class Framework
 public:
 	Framework();
 	void playGame();
+	void restartGame();
 	void masterMenu();
 	bool insideMenu();
 	void help();
 	bool gameOver();
+	bool bulletKillUser();
+	void bulletKillEnemy(int i);
+	bool userCrash(int x, int y);
 	bool airCrash();
 
 	void drawEverything(std::vector <Aircraft *> air, int& fire);

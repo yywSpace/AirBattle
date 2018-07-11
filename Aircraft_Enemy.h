@@ -16,7 +16,7 @@ public:
 	void moveAircraft();
 	void setAttribute(int n, int x, int y, int life);
 	Aircraft_Attr& getAttribute(int n);
-	void initAircraft();
+	void initAircraft(int eGenerateSpeed, int eMoveSpeed, int enemyNum, int life);
 	virtual void generateBullet();
 	virtual void moveBullet();
 	virtual void drawAircraft();
